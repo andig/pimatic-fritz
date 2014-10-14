@@ -1,0 +1,25 @@
+{
+  "name": "pimatic-fritz",
+  "description": "Fritz plugin",
+  "version": "0.0.1",
+  "author": "Andreas Goetz <cpuidle@gmx.de>",
+  "homepage": "http://github.com/andig/pimatic-fritz",
+  "main": "fritz.coffee",
+  "configSchema": "fritz-config-schema.coffee",
+  "files": [
+    "fritz.coffee",
+    "README.md",
+    "device-config-schema.coffee",
+    "fritz-config-schema.coffee"
+  ],
+  "dependencies": {
+  	"smartfritz-promise": "0.2.*"
+  },
+  "peerDependencies": {
+    "pimatic": ">0.8.17"
+  },
+  "engines": {
+    "node": ">0.8.x",
+    "npm": ">1.1.x"
+  }
+}
