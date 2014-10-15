@@ -1,34 +1,32 @@
-pimatic volkszaehler plugin
+pimatic fritz plugin
 ===========================
 
-Volkszaehler plugin enables connecting the [volkszahler.org](http://volkszahler.org) smart meter application to [pimatic](http://pimatic.org) automation server.
-
-**NOTE** currently, volkszahler master branch does not contain the needed patches to push data to pimatic.
+Fritz plugin enables connecting FritzDECT devices to [pimatic](http://pimatic.org) automation server.
 
 Plugin Configuration
 -------------
 You can load the plugin by editing your `config.json` to include:
 
     {
-      "plugin": "volkszaehler",
-      "middleware": "http://127.0.0.1/middleware.php", // url of the volkszaehler middleware
+      "plugin": "fritz",
+      "url": "http://fritz.box", // url of the FritzBox
+      "user": "username" // FritzBox user
+      "password": "password" // FritzBox password
+      "timeout": 60 // Polling interval for the FritzDECT switches
     }
-
-The middleware url is needed to retrieve th volkszaehler installation's capabilities, especially the [entity type definitions](https://github.com/volkszaehler/volkszaehler.org/blob/master/lib/Volkszaehler/Definition/EntityDefinition.json).
 
 Device Configuration
 -------------
-Devices are linked to volkszaehler channels by specifying the `class`, `middleware` and `uuid` properties:
+Devices are linked to fritz plugin channels by specifying the `class`, `middleware` and `ain` properties:
 
 	...
 	"devices": [
 	{
-		"id": "home-bezug",
-		"name": "Kanal 1",
-		"class": "Volkszaehler",
-		"middleware": "http://127.0.0.1/middleware.php", // url of the device's middleware
-		"uuid": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx"
+		"id": "home-switch",
+		"name": "Fritz outlet",
+		"class": "FritzOutlet",
+		"ain": "xxxxxxxxx" // ain of the fritz switch
 	},
 	...
 
-As `middleware` can be configured per device, multiple volkszaehler installations can be connected as long as their capabiltiies match.
+A list of available fritz switch AINs will be logged to the pimatic console when the plugin is enabled.
