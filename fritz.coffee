@@ -78,6 +78,7 @@ module.exports = (env) ->
                 return fritz[functionName] args...
           throw error
 
+
   class FritzOutletDevice extends env.devices.SwitchActuator
     # attributes
     attributes:
@@ -109,8 +110,8 @@ module.exports = (env) ->
           state:
             type: t.boolean
 
-    _power: null
-    _energy: null
+    _power: 0
+    _energy: 0
 
     # Initialize device by reading entity definition from middleware
     constructor: (@config, @plugin) ->
@@ -133,17 +134,23 @@ module.exports = (env) ->
           @_setState(if state then on else off)
           @plugin.fritzCall("getSwitchPower", @config.ain)
           .then (power) =>
-            @_setPower(power)
+            @_setPower(parseFloat(power))
             @plugin.fritzCall("getSwitchEnergy", @config.ain)
             .then (energy) =>
-              @_setEnergy(energy)
+              @_setEnergy(parseFloat(energy))
         .error (error) ->
           env.logger.error "Cannot access #{error.options?.url}: #{error.response?.statusCode}"
+
+    # Get current value of last update in defined unit
+    getPower: -> Promise.resolve(@_power)
 
     _setPower: (power) ->
       if @_power is power then return
       @_power = power
       @emit "power", power
+
+    # Get total value of last update in defined unit
+    getEnergy: -> Promise.resolve(@_energy)
 
     _setEnergy: (energy) ->
       if @_energy is energy then return
@@ -155,12 +162,6 @@ module.exports = (env) ->
       @plugin.fritzCall((if state then "setSwitchOn" else "setSwitchOff"), @config.ain)
         .then (state) ->
           @_setState(if state then on else off)
-
-    # Get current value of last update in defined unit
-    getPower: -> Promise.resolve(@_power)
-
-    # Get total value of last update in defined unit
-    getEnergy: -> Promise.resolve(@_energy)
 
     # Returns a promise that will be fulfilled with the state
     getState: -> Promise.resolve(@_state)
