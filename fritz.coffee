@@ -14,8 +14,13 @@ module.exports = (env) ->
   # Require request
   fritz = require 'smartfritz-promise'
 
+
+
   # ###FritzPlugin class
   class FritzPlugin extends env.plugins.Plugin
+
+    # Fritz session id
+    sid: null
 
     # ####init()
     # The `init` function is called by the framework to ask your plugin to initialise.
@@ -31,13 +36,12 @@ module.exports = (env) ->
       deviceConfigDef = require("./device-config-schema")
 
       # merge extended options, e.g. for accepting self-signed SSL certificates
-      options = @extend { url: @config.url }, @config.options
-
-      fritz.getSessionID(@config.user, @config.password, options).then (sid) ->
-        console.log("Fritz!Session ID: " + sid)
-      #   fritz.getSwitchList sid
-      #   .then (ains) ->
-      #     console.log("Switches AIDs: " + ains)
+      @fritzCall("getSwitchList", @config)
+        .then (ains) ->
+          console.log ains
+          env.logger.info "Fritz AINs: " + ains
+        .error (error) ->
+          env.logger.error "Cannot access #{error.options?.url}: #{error.response?.statusCode}"
 
       @framework.deviceManager.registerDeviceClass("FritzOutlet", {
         configDef: deviceConfigDef.FritzOutlet,
@@ -45,23 +49,46 @@ module.exports = (env) ->
           return new FritzOutletDevice(config, this)
       })
 
-    # Extend a source object with the properties of another object (shallow copy).
-    extend: (object, properties) ->
-      for key, val of properties
-        object[key] = val
-      return object
+      # @framework.deviceManager.registerDeviceClass("FritzWlan", {
+      #   configDef: deviceConfigDef.FritzWlan,
+      #   createCallback: (config) =>
+      #     return new FritzWlanDevice(config, this)
+      # })
+
+    # ####fritzCall()
+    # `fritzCall` can call functions on the smartfritz api and automatically establish session
+    # @todo: implement network retry
+    fritzCall: (functionName, ain) =>
+      args = [@sid]
+      args.push ain if ain
+      args.push { url: @config.url }
+
+      return (fritz[functionName] args...)
+        .error (error) =>
+          if error.response?.statusCode == 403
+            env.logger.warn "Re-establishing session at " + @config.url
+            return fritz.getSessionID(@config.user, @config.password, { url: @config.url })
+              .then (sid) =>
+                # @todo provide easly handling of sid == '0000000000000000'
+                @sid = sid
+                # try again with new sid
+                args = [sid]
+                args.push ain if ain
+                args.push { url: @config.url }
+                return fritz[functionName] args...
+          throw error
 
   class FritzOutletDevice extends env.devices.SwitchActuator
     # attributes
     attributes:
-      current:
-        description: "Current consumption"
+      power:
+        description: "Current power"
         type: "number"
         unit: 'W'
-      total:
-        description: "Total consumption"
+      energy:
+        description: "Total energy"
         type: "number"
-        unit: 'W'
+        unit: 'Wh'
 
     # actions
     actions:
@@ -82,28 +109,58 @@ module.exports = (env) ->
           state:
             type: t.boolean
 
-    _current: null
-    _total: null
+    _power: null
+    _energy: null
 
     # Initialize device by reading entity definition from middleware
     constructor: (@config, @plugin) ->
       @name = config.name
       @id = config.id
+      @timeout = 1000 * (config.timeout or plugin.config.timeout)
 
-      # inherit middleware from plugin if not defined
-      @config.url = @plugin.config.url unless @config.url
-
+      # keep updating
+      @requestUpdate()
+      setInterval( =>
+        @requestUpdate()
+      , @timeout
+      )
       super()
 
-    # Get current value of last update in defined unit
-    getCurrent: -> Promise.resolve(@_current)
+    # poll device according to timeout
+    requestUpdate: ->
+      @plugin.fritzCall("getSwitchState", @config.ain)
+        .then (state) =>
+          @_setState(if state then on else off)
+          @plugin.fritzCall("getSwitchPower", @config.ain)
+          .then (power) =>
+            @_setPower(power)
+            @plugin.fritzCall("getSwitchEnergy", @config.ain)
+            .then (energy) =>
+              @_setEnergy(energy)
+        .error (error) ->
+          env.logger.error "Cannot access #{error.options?.url}: #{error.response?.statusCode}"
 
-    # Get total value of last update in defined unit
-    getTotal: -> Promise.resolve(@_total)
+    _setPower: (power) ->
+      if @_power is power then return
+      @_power = power
+      @emit "power", power
+
+    _setEnergy: (energy) ->
+      if @_energy is energy then return
+      @_energy = energy
+      @emit "energy", energy
 
     # Retuns a promise that is fulfilled when done.
     changeStateTo: (state) ->
-      throw new Error "Function \"changeStateTo\" is not implemented!"
+      @plugin.fritzCall((if state then "setSwitchOn" else "setSwitchOff"), @config.ain)
+        .then (state) ->
+          @_setState(if state then on else off)
+
+    # Get current value of last update in defined unit
+    getPower: -> Promise.resolve(@_power)
+
+    # Get total value of last update in defined unit
+    getEnergy: -> Promise.resolve(@_energy)
 
     # Returns a promise that will be fulfilled with the state
     getState: -> Promise.resolve(@_state)

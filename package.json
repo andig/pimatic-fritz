@@ -1,7 +1,7 @@
 {
   "name": "pimatic-fritz",
   "description": "Fritz plugin",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "Andreas Goetz <cpuidle@gmx.de>",
   "homepage": "http://github.com/andig/pimatic-fritz",
   "main": "fritz.coffee",
@@ -13,7 +13,7 @@
     "fritz-config-schema.coffee"
   ],
   "dependencies": {
-  	"smartfritz-promise": "0.2.*"
+  	"smartfritz-promise": ">=0.2.1"
   },
   "peerDependencies": {
     "pimatic": ">0.8.17"
