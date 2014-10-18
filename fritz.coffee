@@ -38,7 +38,6 @@ module.exports = (env) ->
       # merge extended options, e.g. for accepting self-signed SSL certificates
       @fritzCall("getSwitchList", @config)
         .then (ains) ->
-          console.log ains
           env.logger.info "Fritz AINs: " + ains
         .error (error) ->
           env.logger.error "Cannot access #{error.options?.url}: #{error.response?.statusCode}"
