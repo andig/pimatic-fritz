@@ -63,6 +63,8 @@ module.exports = (env) ->
       args.push ain if ain
       args.push { url: @config.url }
 
+      env.logger.debug "smartfritz->#{functionName}(#{@config.url}, #{@sid}, #{ain})"
+
       return (fritz[functionName] args...)
         .error (error) =>
           if error.response?.statusCode == 403
@@ -82,6 +84,10 @@ module.exports = (env) ->
   class FritzOutletDevice extends env.devices.SwitchActuator
     # attributes
     attributes:
+      state:
+        description: "Current state of the outlet"
+        type: t.boolean
+        labels: ['on', 'off']
       power:
         description: "Current power"
         type: "number"
@@ -110,8 +116,10 @@ module.exports = (env) ->
           state:
             type: t.boolean
 
-    _power: 0
-    _energy: 0
+    # status variables
+    _power: null
+    _energy: null
+    _state: null
 
     # Initialize device by reading entity definition from middleware
     constructor: (@config, @plugin) ->
@@ -160,12 +168,9 @@ module.exports = (env) ->
     # Retuns a promise that is fulfilled when done.
     changeStateTo: (state) ->
       @plugin.fritzCall((if state then "setSwitchOn" else "setSwitchOff"), @config.ain)
-        .then (state) ->
+        .then (state) =>
           @_setState(if state then on else off)
-
-    # Returns a promise that will be fulfilled with the state
-    getState: -> Promise.resolve(@_state)
-
+          Promise.resolve()
 
   # ###Finally
   fritzPlugin = new FritzPlugin
