@@ -7,6 +7,10 @@ module.exports = {
       ain:
         description: "Device AIN"
         type: "string"
+    interval:
+      description: "Polling interval for switch state in seconds"
+      type: "number"
+      default: 0
   }
   FritzWlan: {
     title: "Fritz!Box guest wlan"

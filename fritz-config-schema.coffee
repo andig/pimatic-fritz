@@ -13,7 +13,7 @@ module.exports = {
     password:
       description: "Fritz!Box password"
       type: "string"
-    timeout:
+    interval:
       description: "Polling interval for switch state in seconds"
       type: "number"
       default: 60

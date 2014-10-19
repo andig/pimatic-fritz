@@ -38,7 +38,7 @@ module.exports = (env) ->
       # merge extended options, e.g. for accepting self-signed SSL certificates
       @fritzCall("getSwitchList", @config)
         .then (ains) ->
-          env.logger.info "Fritz AINs: " + ains
+          env.logger.info "Device AINs: " + ains
         .error (error) ->
           env.logger.error "Cannot access #{error.options?.url}: #{error.response?.statusCode}"
 
@@ -62,7 +62,7 @@ module.exports = (env) ->
       args.push ain if ain
       args.push { url: @config.url }
 
-      env.logger.debug "smartfritz->#{functionName}(#{@config.url}, #{@sid}, #{ain})"
+      env.logger.debug "#{functionName} #{@config.url}, #{@sid}, #{ain}"
 
       return (fritz[functionName] args...)
         .error (error) =>
@@ -124,17 +124,17 @@ module.exports = (env) ->
     constructor: (@config, @plugin) ->
       @name = config.name
       @id = config.id
-      @timeout = 1000 * (config.timeout or plugin.config.timeout)
+      @interval = 1000 * (config.interval or plugin.config.interval)
 
       # keep updating
       @requestUpdate()
       setInterval( =>
         @requestUpdate()
-      , @timeout
+      , @interval
       )
       super()
 
-    # poll device according to timeout
+    # poll device according to interval
     requestUpdate: ->
       @plugin.fritzCall("getSwitchState", @config.ain)
         .then (state) =>
