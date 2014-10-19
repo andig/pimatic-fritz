@@ -12,7 +12,7 @@ You can load the plugin by editing your `config.json` to include:
       "url": "http://fritz.box", // url of the FritzBox
       "user": "username" // FritzBox user
       "password": "password" // FritzBox password
-      "timeout": 60 // Polling interval for the FritzDECT switches
+      "interval": 60 // Polling interval for the FritzDECT switches
     }
 
 Device Configuration
@@ -26,6 +26,7 @@ Devices are linked to fritz plugin channels by specifying the `class`, `middlewa
 		"name": "Fritz outlet",
 		"class": "FritzOutlet",
 		"ain": "xxxxxxxxx" // ain of the fritz switch
+      	"interval": 60 // Polling interval. Inherited from plugin if not defined.
 	},
 	...
 
