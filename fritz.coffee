@@ -141,10 +141,10 @@ module.exports = (env) ->
           @_setState(if state then on else off)
           @plugin.fritzCall("getSwitchPower", @config.ain)
           .then (power) =>
-            @_setPower(parseFloat(power))
+            @_setPower(power)
             @plugin.fritzCall("getSwitchEnergy", @config.ain)
             .then (energy) =>
-              @_setEnergy(parseFloat(energy))
+              @_setEnergy(energy)
         .error (error) ->
           env.logger.error "Cannot access #{error.options?.url}: #{error.response?.statusCode}"
 
