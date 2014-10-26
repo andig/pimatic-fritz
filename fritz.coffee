@@ -48,11 +48,21 @@ module.exports = (env) ->
           return new FritzOutletDevice(config, this)
       })
 
-      # @framework.deviceManager.registerDeviceClass("FritzWlan", {
-      #   configDef: deviceConfigDef.FritzWlan,
-      #   createCallback: (config) =>
-      #     return new FritzWlanDevice(config, this)
-      # })
+      @framework.deviceManager.registerDeviceClass("FritzWlan", {
+        configDef: deviceConfigDef.FritzWlan,
+        createCallback: (config) =>
+          return new FritzWlanDevice(config, this)
+      })
+
+      # # wait till all plugins are loaded
+      # @framework.on "after init", =>
+      #   # Check if the mobile-frontent was loaded and get a instance
+      #   mobileFrontend = @framework.pluginManager.getPlugin 'mobile-frontend'
+      #   if mobileFrontend?
+      #     mobileFrontend.registerAssetFile 'js', "pimatic-fritz/app/fritz-outlet-item.coffee"
+      #     mobileFrontend.registerAssetFile 'html', "pimatic-fritz/app/fritz.jade"
+      #   else
+      #     env.logger.warn "Could not find the mobile-frontend. No gui will be available"
 
     # ####fritzCall()
     # `fritzCall` can call functions on the smartfritz api and automatically establish session
@@ -89,12 +99,13 @@ module.exports = (env) ->
         labels: ['on', 'off']
       power:
         description: "Current power"
-        type: "number"
+        type: t.number
         unit: 'W'
       energy:
         description: "Total energy"
-        type: "number"
-        unit: 'Wh'
+        type: t.number
+        unit: 'kWh'
+        displaySparkline: false
 
     # actions
     actions:
@@ -115,6 +126,8 @@ module.exports = (env) ->
           state:
             type: t.boolean
 
+    # template: 'fritz-outlet'
+    
     # status variables
     _power: null
     _energy: null
@@ -144,7 +157,7 @@ module.exports = (env) ->
             @_setPower(power)
             @plugin.fritzCall("getSwitchEnergy", @config.ain)
             .then (energy) =>
-              @_setEnergy(energy)
+              @_setEnergy(energy / 1000.0)
         .error (error) ->
           env.logger.error "Cannot access #{error.options?.url}: #{error.response?.statusCode}"
 
@@ -170,6 +183,95 @@ module.exports = (env) ->
         .then (state) =>
           @_setState(if state then on else off)
           Promise.resolve()
+
+
+  class FritzWlanDevice extends env.devices.SwitchActuator
+    # attributes
+    attributes:
+      state:
+        description: "Current state of the guest wlan"
+        type: t.boolean
+        labels: ['on', 'off']
+      ssid:
+        description: "SSID"
+        type: t.string
+      psk:
+        description: "PSK"
+        type: t.string
+
+    # actions
+    actions:
+      turnOn:
+        description: "turns the guest wlan on"
+      turnOff:
+        description: "turns the guest wlan off"
+      changeStateTo:
+        description: "changes the guest wlan to on or off"
+        params:
+          state:
+            type: t.boolean
+      toggle:
+        description: "toggle the state of the guest wlan"
+      getState:
+        description: "returns the current state of the guest wlan"
+        returns:
+          state:
+            type: t.boolean
+    
+    # status variables
+    _ssid: null
+    _psk: null
+    _state: null
+
+    # Initialize device by reading entity definition from middleware
+    constructor: (@config, @plugin) ->
+      @name = config.name
+      @id = config.id
+      @interval = 1000 * (config.interval or plugin.config.interval)
+
+      # keep updating
+      @requestUpdate()
+      setInterval( =>
+        @requestUpdate()
+      , @interval
+      )
+      super()
+
+    # poll device according to interval
+    requestUpdate: ->
+      @plugin.fritzCall("getGuestWlan")
+        .then (settings) =>
+          console.log settings
+          @_setState(if settings.activate_guest_access then on else off)
+          @_setSsid(settings.guest_ssid)
+          @_setPsk(settings.wpa_key)
+        .error (error) ->
+          env.logger.error "Cannot access #{error.options?.url}: #{error.response?.statusCode}"
+
+    # Get current value of last update
+    getSsid: -> Promise.resolve(@_ssid)
+
+    _setSsid: (ssid) ->
+      if @_ssid is ssid then return
+      @_ssid = ssid
+      @emit "ssid", ssid
+
+    getPsk: -> Promise.resolve(@_psk)
+
+    _setPsk: (psk) ->
+      if @_psk is psk then return
+      @_psk = psk
+      @emit "psk", psk
+
+    # Retuns a promise that is fulfilled when done.
+    changeStateTo: (state) ->
+      @plugin.fritzCall("setGuestWlan", state)
+        .then (settings) =>
+          @_setState(if settings.activate_guest_access then on else off)
+          @_setSsid(settings.guest_ssid)
+          @_setPsk(settings.wpa_key)
+          Promise.resolve()
+
 
   # ###Finally
   fritzPlugin = new FritzPlugin
