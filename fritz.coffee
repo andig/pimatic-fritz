@@ -157,7 +157,7 @@ module.exports = (env) ->
             @_setPower(power)
             @plugin.fritzCall("getSwitchEnergy", @config.ain)
             .then (energy) =>
-              @_setEnergy(energy / 1000.0)
+              @_setEnergy(Math.round(energy / 100.0) / 10.0)
         .error (error) ->
           env.logger.error "Cannot access #{error.options?.url}: #{error.response?.statusCode}"
 
@@ -241,7 +241,6 @@ module.exports = (env) ->
     requestUpdate: ->
       @plugin.fritzCall("getGuestWlan")
         .then (settings) =>
-          console.log settings
           @_setState(if settings.activate_guest_access then on else off)
           @_setSsid(settings.guest_ssid)
           @_setPsk(settings.wpa_key)
