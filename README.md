@@ -10,8 +10,8 @@ You can load the plugin by editing your `config.json` to include:
     {
       "plugin": "fritz",
       "url": "http://fritz.box", // url of the FritzBox
-      "user": "username" // FritzBox user
-      "password": "password" // FritzBox password
+      "user": "username", // FritzBox user
+      "password": "password", // FritzBox password
       "interval": 60 // Polling interval for the FritzDECT switches
     }
 
