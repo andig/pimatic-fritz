@@ -3,6 +3,7 @@ module.exports = {
   FritzOutlet: {
     title: "Fritz!DECT 200 outlet"
     type: "object"
+    extensions: ["xLink", "xAttributeOptions"]
     properties:
       ain:
         description: "Device AIN"
@@ -15,6 +16,7 @@ module.exports = {
   FritzWlan: {
     title: "Fritz!Box guest WLAN"
     type: "object"
+    extensions: ["xLink", "xAttributeOptions"]
     properties:
       interval:
         description: "Polling interval for WLAN state in seconds"
