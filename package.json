@@ -1,7 +1,7 @@
 {
   "name": "pimatic-fritz",
   "description": "Connect pimatic to FritzBox ad´nd FritzDECT devices",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "author": {
     "name": "Andreas Goetz",
     "email": "<cpuidle@gmx.de>",
