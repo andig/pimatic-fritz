@@ -155,7 +155,7 @@ module.exports = (env) ->
       @name = config.name
       @id = config.id
       @interval = 1000 * (config.interval or plugin.config.interval)
-
+      @legacyMode = config.legacyMode
       # keep updating
       @requestUpdate()
       setInterval( =>
@@ -164,8 +164,24 @@ module.exports = (env) ->
       )
       super()
 
+    requestUpdateLegacyMode: ->
+      # Older Fritz!OS versions lower than version 6.20 do not appear to support
+      # the "getDeviceListInfo" service method properly. Thus, the legacyMode is to provide a work
+      # around to supported older Fritz!OS versions
+      @plugin.fritzCall("getSwitchState", @config.ain)
+      .then (state) =>
+        @_setState(if state then on else off)
+        @plugin.fritzCall("getSwitchPower", @config.ain)
+        .then (power) =>
+          @_setPower(power)
+          @plugin.fritzCall("getSwitchEnergy", @config.ain)
+          .then (energy) =>
+            @_setEnergy(Math.round(energy / 100.0) / 10.0)
+      .error (error) ->
+        env.logger.error "Cannot access #{error.options?.url}: #{error.response?.statusCode}"
+
     # poll device according to interval
-    requestUpdate:->
+    requestUpdateGetDeviceListInfo:->
       @plugin.fritzCall("getDeviceListInfo", @config.ain)
         .then (xmlDeviceInfo) =>
           env.logger.debug xmlDeviceInfo
@@ -192,6 +208,12 @@ module.exports = (env) ->
           )
         .error (error) ->
           env.logger.error "Cannot access #{error.options?.url}: #{error.response?.statusCode}"
+
+    requestUpdate: ->
+      if @legacyMode
+        @requestUpdateLegacyMode()
+      else
+        @requestUpdateGetDeviceListInfo()
 
     # helper function to get the object path as older versions of lodash do not support this
     _get: (obj, path) ->
