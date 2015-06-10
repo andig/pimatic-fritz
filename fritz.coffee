@@ -14,12 +14,6 @@ module.exports = (env) ->
   # Require request
   fritz = require 'smartfritz-promise'
 
-  # Require lodash
-  _ = env.require 'lodash'
-
-  # Require xml2js string parser
-  xml2js = require('xml2js')
-
 
 
   # ###FritzPlugin class
@@ -27,12 +21,6 @@ module.exports = (env) ->
 
     # Fritz session id
     sid: null
-
-    # create xml to json parser which is used to process the result of "getdevicelistinfos" requests
-    xmlParser: new xml2js.Parser({
-      explicitArray: false,
-      mergeAttrs: true
-    })
 
     # ####init()
     # The `init` function is called by the framework to ask your plugin to initialise.
@@ -118,10 +106,6 @@ module.exports = (env) ->
         type: t.number
         unit: 'kWh'
         displaySparkline: false
-      temperature:
-        description: "Temperature"
-        type: t.number
-        unit: '°C'
 
     # actions
     actions:
@@ -147,7 +131,6 @@ module.exports = (env) ->
     # status variables
     _power: null
     _energy: null
-    _temperature: null
     _state: null
 
     # Initialize device by reading entity definition from middleware
@@ -165,43 +148,18 @@ module.exports = (env) ->
       super()
 
     # poll device according to interval
-    requestUpdate:->
-      @plugin.fritzCall("getDeviceListInfo", @config.ain)
-        .then (xmlDeviceInfo) =>
-          env.logger.debug xmlDeviceInfo
-
-          @plugin.xmlParser.parseString(xmlDeviceInfo, (err, jsDeviceInfo) =>
-            unless _.isObject err
-              dev = @_get(jsDeviceInfo, "devicelist.device")
-              if _.isObject(dev)
-                env.logger.debug dev
-                if (_.has(dev, "switch"))
-                  @_setState(if @_get(dev, "switch.state") is '1' then on else off)
-
-                if (_.has(dev, "powermeter"))
-                  # "powermeter.power" value is provided in centiwatt
-                  @_setPower Math.round(@_get(dev, "powermeter.power") / 100.0) / 10.0
-                  # "powermeter.energy" value is provided in Wh
-                  @_setEnergy Math.round(@_get(dev, "powermeter.energy") / 10.0) / 100.0
-
-                if (_.has(dev, "temperature"))
-                  # "temperature.celsius" value is provided in 10^-1 degrees C
-                  @_setTemperature (Number(@_get(dev, "temperature.celsius")) + Number(@_get(dev, "temperature.offset")))/10
-            else
-              env.logger.error "Invalid device info data: " + err
-          )
+    requestUpdate: ->
+      @plugin.fritzCall("getSwitchState", @config.ain)
+        .then (state) =>
+          @_setState(if state then on else off)
+          @plugin.fritzCall("getSwitchPower", @config.ain)
+          .then (power) =>
+            @_setPower(power)
+            @plugin.fritzCall("getSwitchEnergy", @config.ain)
+            .then (energy) =>
+              @_setEnergy(Math.round(energy / 100.0) / 10.0)
         .error (error) ->
           env.logger.error "Cannot access #{error.options?.url}: #{error.response?.statusCode}"
-
-    # helper function to get the object path as older versions of lodash do not support this
-    _get: (obj, path) ->
-      return undefined if not _.isObject obj or not _.isString path
-      keys = path.split '.'
-      for key in keys
-        if not _.isObject(obj) or not obj.hasOwnProperty(key)
-          return undefined
-        obj = obj[key]
-      return obj
 
     # Get current value of last update in defined unit
     getPower: -> Promise.resolve(@_power)
@@ -218,14 +176,6 @@ module.exports = (env) ->
       if @_energy is energy then return
       @_energy = energy
       @emit "energy", energy
-
-    # Get temperature value of last update in defined unit
-    getTemperature: -> Promise.resolve(@_temperature)
-
-    _setTemperature: (temperature) ->
-      if @_temperature is temperature then return
-      @_temperature = temperature
-      @emit "temperature", temperature
 
     # Retuns a promise that is fulfilled when done.
     changeStateTo: (state) ->

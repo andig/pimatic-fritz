@@ -25,7 +25,7 @@ Devices are linked to fritz plugin channels by specifying the `class`, `middlewa
 		"id": "home-switch",
 		"name": "Fritz outlet",
 		"class": "FritzOutlet",
-		"ain": "xxxxxxxxx", // ain of the fritz switch
+		"ain": "xxxxxxxxx" // ain of the fritz switch
       	"interval": 60 // Polling interval. Inherited from plugin if not defined.
 	},
 	...
