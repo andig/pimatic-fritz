@@ -188,7 +188,7 @@ module.exports = (env) ->
 
           @plugin.xmlParser.parseString(xmlDeviceInfo, (err, jsDeviceInfo) =>
             unless _.isObject err
-              dev = @_get(jsDeviceInfo, "devicelist.device")
+              dev = @_getDevice(jsDeviceInfo, @config.ain)
               if _.isObject(dev)
                 env.logger.debug dev
                 if (_.has(dev, "switch"))
@@ -224,6 +224,15 @@ module.exports = (env) ->
           return undefined
         obj = obj[key]
       return obj
+
+    _getDevice: (jsDeviceInfo, ain) ->
+      deviceObjectOrArray = @_get(jsDeviceInfo, "devicelist.device")
+      if _.isArray(deviceObjectOrArray)
+        for device in deviceObjectOrArray
+          if device.identifier.replace(/\ /g,'') is ain
+            return device
+      else
+        return deviceObjectOrArray
 
     # Get current value of last update in defined unit
     getPower: -> Promise.resolve(@_power)
