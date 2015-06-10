@@ -1,7 +1,7 @@
 {
   "name": "pimatic-fritz",
   "description": "Connect pimatic to FritzBox ad´nd FritzDECT devices",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "author": {
     "name": "Andreas Goetz",
     "email": "<cpuidle@gmx.de>",
@@ -30,8 +30,7 @@
     "url": "https://github.com/andig/pimatic-fritz"
   },
   "dependencies": {
-    "smartfritz-promise": ">=0.3.2",
-    "xml2js": ">=0.4.9"
+  	"smartfritz-promise": ">=0.3.2"
   },
   "peerDependencies": {
     "pimatic": ">0.8.19"
