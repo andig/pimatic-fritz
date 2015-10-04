@@ -80,6 +80,8 @@ module.exports = (env) ->
     # `fritzCall` can call functions on the smartfritz api and automatically establish session
     # @todo: implement network retry
     fritzCall: (functionName, ain) =>
+      @config.foo = "------"
+
       args = [@sid]
       args.push ain if ain
       args.push { url: @config.url }
