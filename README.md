@@ -19,15 +19,31 @@ Device Configuration
 -------------
 Devices are linked to fritz plugin channels by specifying the `class`, `middleware` and `ain` properties:
 
-	...
-	"devices": [
-	{
-		"id": "home-switch",
-		"name": "Fritz outlet",
-		"class": "FritzOutlet",
-		"ain": "xxxxxxxxx" // ain of the fritz switch
-      	"interval": 60 // Polling interval. Inherited from plugin if not defined.
-	},
-	...
+    ...
+    "devices": [
+    {
+      "id": "home-switch",
+      "name": "Fritz outlet",
+      "class": "FritzOutlet",
+      "ain": "xxxxxxxxx"
+    },
+    {
+      "id": "thermostat-1",
+      "name": "Thermostat 1",
+      "class": "FritzThermostat",
+      "ain": "xxxxxxxxx"
+    },
+    {
+      "id": "temp-1",
+      "name": "TemperatureSensor 1",
+      "class": "FritzTemperatureSensor",
+      "ain": "xxxxxxxxx"
+    },
+    {
+      "id": "guest-wlan",
+      "name": "Guest WLAN",
+      "class": "FritzWlan"
+    },
+  ...
 
-A list of available fritz switch AINs will be logged to the pimatic console when the plugin is enabled.
+A list of available fritz switch and thermostat AINs will be logged to the pimatic console when the plugin is started.
