@@ -2,18 +2,14 @@
 
 module.exports = (env) ->
 
-  # Require the bluebird promise library
+  # libraries
   Promise = env.require 'bluebird'
-
-  # Require the [cassert library](https://github.com/rhoot/cassert).
   assert = env.require 'cassert'
-
-  # Require the decl-api library
   t = env.require('decl-api').types
+  _ = env.require 'lodash'
 
-  # Require request
-  fritz = require 'smartfritz-promise'
-
+  # Require [smartfritz library](https://github.com/andig/smartfritz)
+  fritz = env.require 'smartfritz-promise'
 
 
   # ###FritzPlugin class
@@ -35,63 +31,81 @@ module.exports = (env) ->
       # register devices
       deviceConfigDef = require("./device-config-schema")
 
-      # merge extended options, e.g. for accepting self-signed SSL certificates
+      # switch list
       @fritzCall("getSwitchList", @config)
-        .then (ains) ->
-          env.logger.info "Device AINs: " + ains
-        .error (error) ->
-          env.logger.error "Cannot access #{error.options?.url}: #{error.response?.statusCode}"
+        .then (ains) =>
+          env.logger.info "Switch AINs: " + ains
+          # thermostat list
+          @fritzCall("getThermostatList", @config)
+            .then (ains) ->
+              env.logger.info "Thermostat AINs: " + ains
 
       @framework.deviceManager.registerDeviceClass("FritzOutlet", {
         configDef: deviceConfigDef.FritzOutlet,
-        createCallback: (config) =>
-          return new FritzOutletDevice(config, this)
+        createCallback: (config, lastState) =>
+          return new FritzOutletDevice(config, lastState, this)
       })
 
       @framework.deviceManager.registerDeviceClass("FritzWlan", {
         configDef: deviceConfigDef.FritzWlan,
-        createCallback: (config) =>
-          return new FritzWlanDevice(config, this)
+        createCallback: (config, lastState) =>
+          return new FritzWlanDevice(config, lastState, this)
+      })
+
+      @framework.deviceManager.registerDeviceClass("FritzThermostat", {
+        configDef: deviceConfigDef.FritzThermostat,
+        createCallback: (config, lastState) =>
+          return new FritzThermostatDevice(config, lastState, this)
+      })
+
+      @framework.deviceManager.registerDeviceClass("FritzTemperatureSensor", {
+        configDef: deviceConfigDef.FritzTemperatureSensor,
+        createCallback: (config, lastState) =>
+          return new FritzTemperatureSensorDevice(config, lastState, this)
       })
 
       # # wait till all plugins are loaded
       # @framework.on "after init", =>
-      #   # Check if the mobile-frontent was loaded and get a instance
       #   mobileFrontend = @framework.pluginManager.getPlugin 'mobile-frontend'
       #   if mobileFrontend?
-      #     mobileFrontend.registerAssetFile 'js', "pimatic-fritz/app/fritz-outlet-item.coffee"
-      #     mobileFrontend.registerAssetFile 'html', "pimatic-fritz/app/fritz.jade"
-      #   else
-      #     env.logger.warn "Could not find the mobile-frontend. No gui will be available"
+      #     mobileFrontend.registerAssetFile 'js', "pimatic-fritz/simplethermostat-item.coffee"
+      #     mobileFrontend.registerAssetFile 'html', "pimatic-fritz/simplethermostat-item.jade"
+      return
 
     # ####fritzCall()
     # `fritzCall` can call functions on the smartfritz api and automatically establish session
     # @todo: implement network retry
     fritzCall: (functionName, ain) =>
-      args = [@sid]
-      args.push ain if ain
-      args.push { url: @config.url }
-
       env.logger.debug "#{functionName} #{@config.url}, #{@sid}, #{ain}"
+      args = [{ url: @config.url }]
+      args.unshift ain if ain
 
-      return (fritz[functionName] args...)
-        .error (error) =>
-          if error.response?.statusCode == 403
-            env.logger.warn "Re-establishing session at " + @config.url
-            return fritz.getSessionID(@config.user, @config.password, { url: @config.url })
-              .then (sid) =>
-                # @todo provide easly handling of sid == '0000000000000000'
-                @sid = sid
-                # try again with new sid
-                args = [sid]
-                args.push ain if ain
-                args.push { url: @config.url }
-                return fritz[functionName] args...
-          throw error
+      # chain calls to the FritzBox to obtain single session id, make sure we have a promise in the first place
+      return @fritzPromise = (@fritzPromise or Promise.resolve()).reflect().then =>
+        return (fritz[functionName] @sid, args...)
+          .catch (error) =>
+            if error.response?.statusCode == 403
+              env.logger.warn "Re-establishing session at " + @config.url
+              return fritz.getSessionID(@config.user, @config.password, { url: @config.url })
+                .then (@sid) =>
+                  # @todo provide handling of sid == '0000000000000000'
+                  args = [{ url: @config.url }]
+                  args.unshift ain if ain
+                  return fritz[functionName] @sid, args... # retry with new sid
+            env.logger.error "Cannot access #{error.options?.url}: #{error.response?.statusCode}"
+            throw error
+
+    fritzClampTemperature: (temp) =>
+      if temp is "on"
+        return fritz.MAX_TEMP # indicate "high temp"
+      else if temp is "off"
+        return fritz.MIN_TEMP # indicate "low temp"
+      return temp
 
 
+  # ###FritzOutletDevice class
   class FritzOutletDevice extends env.devices.SwitchActuator
-    # attributes
+
     attributes:
       state:
         description: "Current state of the outlet"
@@ -107,7 +121,6 @@ module.exports = (env) ->
         unit: 'kWh'
         displaySparkline: false
 
-    # actions
     actions:
       turnOn:
         description: "turns the outlet on"
@@ -127,16 +140,16 @@ module.exports = (env) ->
             type: t.boolean
 
     # template: 'fritz-outlet'
-    
+
     # status variables
     _power: null
     _energy: null
     _state: null
 
     # Initialize device by reading entity definition from middleware
-    constructor: (@config, @plugin) ->
-      @name = config.name
+    constructor: (@config, lastState, @plugin) ->
       @id = config.id
+      @name = config.name
       @interval = 1000 * (config.interval or plugin.config.interval)
 
       # keep updating
@@ -158,8 +171,6 @@ module.exports = (env) ->
             @plugin.fritzCall("getSwitchEnergy", @config.ain)
             .then (energy) =>
               @_setEnergy(Math.round(energy / 100.0) / 10.0)
-        .error (error) ->
-          env.logger.error "Cannot access #{error.options?.url}: #{error.response?.statusCode}"
 
     # Get current value of last update in defined unit
     getPower: -> Promise.resolve(@_power)
@@ -185,8 +196,9 @@ module.exports = (env) ->
           Promise.resolve()
 
 
+  # ###FritzWlanDevice class
   class FritzWlanDevice extends env.devices.SwitchActuator
-    # attributes
+
     attributes:
       state:
         description: "Current state of the guest wlan"
@@ -199,7 +211,6 @@ module.exports = (env) ->
         description: "PSK"
         type: t.string
 
-    # actions
     actions:
       turnOn:
         description: "turns the guest wlan on"
@@ -217,16 +228,16 @@ module.exports = (env) ->
         returns:
           state:
             type: t.boolean
-    
+
     # status variables
     _ssid: null
     _psk: null
     _state: null
 
     # Initialize device by reading entity definition from middleware
-    constructor: (@config, @plugin) ->
-      @name = config.name
+    constructor: (@config, lastState, @plugin) ->
       @id = config.id
+      @name = config.name
       @interval = 1000 * (config.interval or plugin.config.interval)
 
       # keep updating
@@ -244,8 +255,6 @@ module.exports = (env) ->
           @_setState(if settings.activate_guest_access then on else off)
           @_setSsid(settings.guest_ssid)
           @_setPsk(settings.wpa_key)
-        .error (error) ->
-          env.logger.error "Cannot access #{error.options?.url}: #{error.response?.statusCode}"
 
     # Get current value of last update
     getSsid: -> Promise.resolve(@_ssid)
@@ -270,6 +279,143 @@ module.exports = (env) ->
           @_setSsid(settings.guest_ssid)
           @_setPsk(settings.wpa_key)
           Promise.resolve()
+
+
+  # ###FritzThermostat class
+  # FritzThermostat devices are a hybrif of
+  #   env.devices.HeatingThermostat that they inherit from and
+  #   env.devices.TemperatureSensor that are additionally implemented
+  class FritzThermostatDevice extends env.devices.HeatingThermostat
+
+    # customize HeatingThermostat attributes
+    attributes:
+      temperatureSetpoint:
+        label: "Temperature Setpoint"
+        description: "The temp that should be set"
+        type: "number"
+        discrete: true
+        unit: "°C"
+      synced:
+        description: "Pimatic and thermostat in sync"
+        type: "boolean"
+      # implement env.devices.TemperatureSensor
+      temperature:
+        description: "The measured temperature"
+        type: t.number
+        unit: '°C'
+        acronym: 'T'
+
+    # customize HeatingThermostat actions
+    actions:
+      changeTemperatureTo:
+        params:
+          temperatureSetpoint:
+            type: "number"
+
+    customConfig:
+      # guiShowModeControl: false
+      # guiShowPresetControl: false
+      guiShowValvePosition: false
+
+    # implement env.devices.TemperatureSensor
+    _temperature: null
+
+    # Initialize device by reading entity definition from middleware
+    constructor: (@config, lastState, @plugin) ->
+      @id = config.id
+      @name = config.name
+      @interval = 1000 * (config.interval or plugin.config.interval)
+
+      # initial state
+      @_temperature = lastState?.temperature?.value
+      @_temperatureSetpoint = lastState?.temperatureSetpoint?.value
+      @_synced = true
+
+      # implement env.devices.TemperatureSensor
+      # @attributes = _.extend @attributes, @customAttributes
+      # remove unsupported gui elements
+      @config = _.extend @config, @customConfig
+
+      # get temp settings
+      @readDefaultTemparatures()
+
+      # keep updating
+      @requestUpdate()
+      setInterval( =>
+        @requestUpdate()
+      , @interval
+      )
+      super()
+
+    # implement env.devices.HeatingThermostat
+    changeTemperatureTo: (temperatureSetpoint) ->
+      @_setSynced(false)
+      @plugin.fritzCall("setTempTarget", @config.ain, temperatureSetpoint)
+        .then (temp) =>
+          @_setSetpoint(temperatureSetpoint)
+          @_setSynced(true)
+      return
+
+    # implement env.devices.TemperatureSensor
+    _setTemperature: (value) ->
+      if @_temperature is value then return
+      @_temperature = value
+      @emit 'temperature', value
+
+    # implement env.devices.TemperatureSensor
+    getTemperature: -> Promise.resolve(@_temperature)
+
+    readDefaultTemparatures: ->
+      @plugin.fritzCall("getTempComfort", @config.ain)
+        .then (temp) =>
+          temp = @plugin.fritzClampTemperature temp
+          @emit "comfyTemp", temp
+          @plugin.fritzCall("getTempNight", @config.ain)
+            .then (temp) =>
+              temp = @plugin.fritzClampTemperature temp
+              @emit "ecoTemp", temp
+              @_setSynced(true)
+
+    # poll device according to interval
+    requestUpdate: ->
+      @plugin.fritzCall("getTemperature", @config.ain)
+        .then (temp) =>
+          temp = @plugin.fritzClampTemperature temp
+          @_setTemperature(temp)
+
+          @plugin.fritzCall("getTempTarget", @config.ain)
+            .then (temp) =>
+              temp = @plugin.fritzClampTemperature temp
+              @_setSetpoint(temp)
+
+
+  # ###FritzTemperatureSensor class
+  # FritzTemperatureSensor device models the temperature of the Comet DECT thermostats
+  class FritzTemperatureSensorDevice extends env.devices.TemperatureSensor
+
+    # Initialize device by reading entity definition from middleware
+    constructor: (@config, lastState, @plugin) ->
+      @id = config.id
+      @name = config.name
+      @interval = 1000 * (config.interval or plugin.config.interval)
+
+      # initial state
+      @_temperature = lastState?.temperature?.value
+
+      # keep updating
+      @requestUpdate()
+      setInterval( =>
+        @requestUpdate()
+      , @interval
+      )
+      super()
+
+    # poll device according to interval
+    requestUpdate: ->
+      @plugin.fritzCall("getTemperature", @config.ain)
+        .then (temp) =>
+          temp = @plugin.fritzClampTemperature temp
+          @_setTemperature(temp)
 
 
   # ###Finally
