@@ -4,3 +4,4 @@ deploy:
   email: cpuidle@gmx.de
   provider: npm
 language: node_js
+sudo: false
