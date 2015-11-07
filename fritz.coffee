@@ -9,7 +9,7 @@ module.exports = (env) ->
   _ = env.require 'lodash'
 
   # Require [smartfritz library](https://github.com/andig/smartfritz)
-  fritz = env.require 'smartfritz-promise'
+  fritz = require 'smartfritz-promise'
 
 
   # ###FritzPlugin class
