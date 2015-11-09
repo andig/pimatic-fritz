@@ -354,7 +354,7 @@ module.exports = (env) ->
         .then (temp) =>
           @_setSetpoint(temperatureSetpoint)
           @_setSynced(true)
-      return
+          Promise.resolve()
 
     # implement env.devices.TemperatureSensor
     _setTemperature: (value) ->
