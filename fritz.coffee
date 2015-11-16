@@ -194,6 +194,12 @@ module.exports = (env) ->
         .then (state) =>
           @_setState(if state then on else off)
           Promise.resolve()
+        .finally =>
+          @plugin.fritzCall("getSwitchState", @config.ain)
+            .then (newState) =>
+              env.logger.debug "changeStateTo state", newState
+            .catch (error) =>
+              env.logger.debug "changeStateTo error", error
 
 
   # ###FritzWlanDevice class
