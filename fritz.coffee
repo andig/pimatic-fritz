@@ -32,11 +32,11 @@ module.exports = (env) ->
       deviceConfigDef = require("./device-config-schema")
 
       # switch list
-      @fritzCall("getSwitchList", @config)
+      @fritzCall("getSwitchList")
         .then (ains) =>
           env.logger.info "Switch AINs: " + ains
           # thermostat list
-          @fritzCall("getThermostatList", @config)
+          @fritzCall("getThermostatList")
             .then (ains) ->
               env.logger.info "Thermostat AINs: " + ains
 
@@ -75,23 +75,18 @@ module.exports = (env) ->
     # ####fritzCall()
     # `fritzCall` can call functions on the smartfritz api and automatically establish session
     # @todo: implement network retry
-    fritzCall: (functionName, ain) =>
-      env.logger.debug "#{functionName} #{@config.url}, #{@sid}, #{ain}"
-      args = [{ url: @config.url }]
-      args.unshift ain if ain
-
+    fritzCall: (functionName, args...) =>
       # chain calls to the FritzBox to obtain single session id, make sure we have a promise in the first place
       return @fritzPromise = (@fritzPromise or Promise.resolve()).reflect().then =>
-        return (fritz[functionName] @sid, args...)
+        env.logger.debug "#{functionName} #{@sid} " + (args||[]).join(" ")
+        return (fritz[functionName] @sid, args..., { url: @config.url })
           .catch (error) =>
             if error.response?.statusCode == 403
               env.logger.warn "Re-establishing session at " + @config.url
               return fritz.getSessionID(@config.user, @config.password, { url: @config.url })
                 .then (@sid) =>
                   # @todo provide handling of sid == '0000000000000000'
-                  args = [{ url: @config.url }]
-                  args.unshift ain if ain
-                  return fritz[functionName] @sid, args... # retry with new sid
+                  return fritz[functionName] @sid, args..., { url: @config.url } # retry with new sid
             env.logger.error "Cannot access #{error.options?.url}: #{error.response?.statusCode}"
             throw error
 
@@ -191,8 +186,9 @@ module.exports = (env) ->
     # Retuns a promise that is fulfilled when done.
     changeStateTo: (state) ->
       @plugin.fritzCall((if state then "setSwitchOn" else "setSwitchOff"), @config.ain)
-        .then (state) =>
-          @_setState(if state then on else off)
+        .then (newState) =>
+          throw "Could not set switch state" if state != newState
+          @_setState(if newState then on else off)
           Promise.resolve()
 
 
@@ -275,6 +271,7 @@ module.exports = (env) ->
     changeStateTo: (state) ->
       @plugin.fritzCall("setGuestWlan", state)
         .then (settings) =>
+          throw "Could not set guest WLAN state" if state != settings.activate_guest_access
           @_setState(if settings.activate_guest_access then on else off)
           @_setSsid(settings.guest_ssid)
           @_setPsk(settings.wpa_key)
@@ -352,6 +349,7 @@ module.exports = (env) ->
       @_setSynced(false)
       @plugin.fritzCall("setTempTarget", @config.ain, temperatureSetpoint)
         .then (temp) =>
+          throw "Could not set temperature setpoint" if temperatureSetpoint != temp
           @_setSetpoint(temperatureSetpoint)
           @_setSynced(true)
           Promise.resolve()
