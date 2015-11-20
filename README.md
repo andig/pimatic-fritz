@@ -3,6 +3,13 @@ pimatic fritz plugin
 
 Fritz plugin enables connecting FritzDECT devices to [pimatic](http://pimatic.org) automation server.
 
+Devices supported are:
+
+  - FritzBox (Guest WLAN configuration)
+  - FritzDECT 200 outlet
+  - CometDECT thermostat
+  - both FritzDECT and CometDECT can also be used as temperature sensors
+
 Plugin Configuration
 -------------
 You can load the plugin by editing your `config.json` to include:
