@@ -30,8 +30,8 @@
     "url": "https://github.com/andig/pimatic-fritz"
   },
   "dependencies": {
-    "smartfritz-promise": "^0.4.1",
-    "bluebird": "^3.0.2"
+    "smartfritz-promise": "^0.4.2",
+    "bluebird": "^3.3.5"
   },
   "peerDependencies": {
     "pimatic": ">0.8.91"
