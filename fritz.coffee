@@ -143,16 +143,21 @@ module.exports = (env) ->
 
     # Initialize device by reading entity definition from middleware
     constructor: (@config, lastState, @plugin) ->
-      @id = config.id
-      @name = config.name
-      @interval = 1000 * (config.interval or plugin.config.interval)
+      @id = @config.id
+      @name = @config.name
+      @interval = 1000 * (@config.interval or @plugin.config.interval)
 
       # keep updating
       @requestUpdate()
-      setInterval( =>
+      @intervalTimerID = setInterval( =>
         @requestUpdate()
       , @interval
       )
+      super()
+
+    destroy: () ->
+      if @intervalTimerID?
+        clearInterval @intervalTimerID
       super()
 
     # poll device according to interval
@@ -232,18 +237,23 @@ module.exports = (env) ->
 
     # Initialize device by reading entity definition from middleware
     constructor: (@config, lastState, @plugin) ->
-      @id = config.id
-      @name = config.name
-      @interval = 1000 * (config.interval or plugin.config.interval)
+      @id = @config.id
+      @name = @config.name
+      @interval = 1000 * (@config.interval or @plugin.config.interval)
 
       # keep updating
       @requestUpdate()
-      setInterval( =>
+      @intervalTimerID = setInterval( =>
         @requestUpdate()
       , @interval
       )
       super()
 
+    destroy: () ->
+      if @intervalTimerID?
+        clearInterval @intervalTimerID
+      super()
+      
     # poll device according to interval
     requestUpdate: ->
       @plugin.fritzCall("getGuestWlan")
@@ -319,9 +329,9 @@ module.exports = (env) ->
 
     # Initialize device by reading entity definition from middleware
     constructor: (@config, lastState, @plugin) ->
-      @id = config.id
-      @name = config.name
-      @interval = 1000 * (config.interval or plugin.config.interval)
+      @id = @config.id
+      @name = @config.name
+      @interval = 1000 * (@config.interval or @plugin.config.interval)
 
       # initial state
       @_temperature = lastState?.temperature?.value
@@ -338,12 +348,17 @@ module.exports = (env) ->
 
       # keep updating
       @requestUpdate()
-      setInterval( =>
+      @intervalTimerID = setInterval( =>
         @requestUpdate()
       , @interval
       )
       super()
 
+    destroy: () ->
+      if @intervalTimerID?
+        clearInterval @intervalTimerID
+      super()
+    
     # implement env.devices.HeatingThermostat
     changeTemperatureTo: (temperatureSetpoint) ->
       @_setSynced(false)
@@ -393,21 +408,26 @@ module.exports = (env) ->
 
     # Initialize device by reading entity definition from middleware
     constructor: (@config, lastState, @plugin) ->
-      @id = config.id
-      @name = config.name
-      @interval = 1000 * (config.interval or plugin.config.interval)
+      @id = @config.id
+      @name = @config.name
+      @interval = 1000 * (@config.interval or @plugin.config.interval)
 
       # initial state
       @_temperature = lastState?.temperature?.value
 
       # keep updating
       @requestUpdate()
-      setInterval( =>
+      @intervalTimerID = setInterval( =>
         @requestUpdate()
       , @interval
       )
       super()
 
+    destroy: () ->
+      if @intervalTimerID?
+        clearInterval @intervalTimerID
+      super()
+      
     # poll device according to interval
     requestUpdate: ->
       @plugin.fritzCall("getTemperature", @config.ain)
