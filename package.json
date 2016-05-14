@@ -34,7 +34,7 @@
     "bluebird": "^3.3.5"
   },
   "peerDependencies": {
-    "pimatic": ">0.8.91||>0.9.x"
+    "pimatic": ">0.8.91 <1.0.0"
   },
   "engines": {
     "node": ">0.8.x",
