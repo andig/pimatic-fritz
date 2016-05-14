@@ -1,7 +1,7 @@
 {
   "name": "pimatic-fritz",
   "description": "Connect pimatic to FritzBox, FritzDECT and CometDECT devices",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "author": {
     "name": "Andreas Goetz",
     "email": "<cpuidle@gmx.de>",
