@@ -40,6 +40,46 @@ module.exports = (env) ->
             .then (ains) ->
               env.logger.info "Thermostat AINs: " + ains
 
+      # auto discovery
+      @framework.deviceManager.on('discover', (eventData) =>
+        @framework.deviceManager.discoverMessage(
+          'pimatic-fritz', "Scanning DECT devices"
+        )
+
+        @fritzCall("getSwitchList")
+          .then (ains) =>
+            for ain in ains
+              config = {
+                class: 'FritzOutlet',
+                id: "switch-" + ain,
+                ain: ain
+              }
+              @framework.deviceManager.discoveredDevice(
+                'pimatic-fritz', "Switch (#{ain})", config
+              )
+        
+        # thermostat list
+        @fritzCall("getThermostatList")
+          .then (ains) =>
+            for ain in ains
+              config = {
+                class: 'FritzThermostat',
+                id: "thermostat-" + ain,
+                ain: ain
+              }
+              @framework.deviceManager.discoveredDevice(
+                'pimatic-fritz', "Thermostat (#{ain})", config
+              )
+              config = {
+                class: 'FritzTemperatureSensor',
+                id: "temperature-" + ain,
+                ain: ain
+              }
+              @framework.deviceManager.discoveredDevice(
+                'pimatic-fritz', "Temperature sensor (#{ain})", config
+              )
+      )
+
       @framework.deviceManager.registerDeviceClass("FritzOutlet", {
         configDef: deviceConfigDef.FritzOutlet,
         createCallback: (config, lastState) =>
