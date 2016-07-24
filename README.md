@@ -1,5 +1,5 @@
-pimatic fritz plugin
-===========================
+# pimatic fritz plugin
+[![NPM Version](https://img.shields.io/npm/v/pimatic-fritz.svg)](https://www.npmjs.com/package/pimatic-fritz)
 
 Fritz plugin enables connecting FritzDECT devices to [pimatic](http://pimatic.org) automation server.
 
@@ -10,8 +10,9 @@ Devices supported are:
   - CometDECT thermostat
   - both FritzDECT and CometDECT can also be used as temperature sensors
 
-Plugin Configuration
--------------
+
+## Plugin Configuration
+
 You can load the plugin by editing your `config.json` to include:
 
     {
@@ -22,8 +23,9 @@ You can load the plugin by editing your `config.json` to include:
       "interval": 60 // Polling interval for the FritzDECT switches
     }
 
-Device Configuration
--------------
+
+## Device Configuration
+
 Devices are linked to fritz plugin channels by specifying the `class`, `middleware` and `ain` properties:
 
     ...
