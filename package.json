@@ -8,6 +8,7 @@
     "url": "http://github.com/andig/pimatic-fritz"
   },
   "homepage": "http://github.com/andig/pimatic-fritz",
+  "license": "MIT",
   "keywords": [
     "pimatic",
     "SmartHome",
