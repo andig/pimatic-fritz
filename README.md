@@ -1,5 +1,6 @@
 # pimatic fritz plugin
 [![NPM Version](https://img.shields.io/npm/v/pimatic-fritz.svg)](https://www.npmjs.com/package/pimatic-fritz)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=9NUJAVLPHUSTW)
 
 Fritz plugin enables connecting FritzDECT devices to [pimatic](http://pimatic.org) automation server.
 
