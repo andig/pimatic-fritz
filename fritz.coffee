@@ -8,8 +8,8 @@ module.exports = (env) ->
   t = env.require('decl-api').types
   _ = env.require 'lodash'
 
-  # Require [smartfritz library](https://github.com/andig/smartfritz)
-  fritz = require 'smartfritz-promise'
+  # Require https://github.com/andig/fritzapi
+  fritz = require 'fritzapi'
 
 
   # ###FritzPlugin class
