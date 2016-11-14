@@ -409,6 +409,11 @@ module.exports = (env) ->
           @_setSynced(true)
           Promise.resolve()
 
+    # implement env.devices.HeatingThermostat
+    changeModeTo: (mode) ->
+      # changing modes is not supported.
+      return Promise.resolve()
+
     # implement env.devices.TemperatureSensor
     _setTemperature: (value) ->
       if @_temperature is value then return
