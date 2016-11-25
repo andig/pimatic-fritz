@@ -351,6 +351,22 @@ module.exports = (env) ->
         type: t.number
         unit: '°C'
         acronym: 'T'
+      # HomeduinoPlugin
+      battery:
+        description: 'battery status'
+        type: 'number'
+        unit: '%'
+        displaySparkline: false
+        icon:
+          noText: true
+          mapping:
+            'icon-battery-empty': 0
+            'icon-battery-fuel-1': [0, 20]
+            'icon-battery-fuel-2': [20, 40]
+            'icon-battery-fuel-3': [40, 60]
+            'icon-battery-fuel-4': [60, 80]
+            'icon-battery-fuel-5': [80, 100]
+            'icon-battery-filled': 100
 
     # customize HeatingThermostat actions
     actions:
@@ -359,10 +375,10 @@ module.exports = (env) ->
           temperatureSetpoint:
             type: "number"
 
-    customConfig:
-      # guiShowModeControl: false
-      # guiShowPresetControl: false
-      # guiShowValvePosition: false
+    # customConfig:
+    #   guiShowModeControl: false
+    #   guiShowPresetControl: false
+    #   guiShowValvePosition: false
 
     # implement env.devices.TemperatureSensor
     _temperature: null
@@ -376,6 +392,7 @@ module.exports = (env) ->
       # initial state
       @_temperature = lastState?.temperature?.value
       @_temperatureSetpoint = lastState?.temperatureSetpoint?.value
+      @_battery = lastState?.battery?.value
       @_synced = true
 
       # implement env.devices.TemperatureSensor
@@ -414,6 +431,11 @@ module.exports = (env) ->
       # changing modes is not supported.
       return Promise.resolve()
 
+    _setBattery: (value) ->
+      if @_battery is value then return
+      @_battery = value
+      @emit 'battery', value
+
     # implement env.devices.TemperatureSensor
     _setTemperature: (value) ->
       if @_temperature is value then return
@@ -446,6 +468,9 @@ module.exports = (env) ->
               temp = @plugin.fritzClampTemperature temp
               @_setSetpoint(temp)
 
+              @plugin.fritzCall("getBatteryCharge", @config.ain)
+                .then (battery) =>
+                  @_setBattery(battery) if battery?
 
   # ###FritzTemperatureSensor class
   # FritzTemperatureSensor device models the temperature of the Comet DECT thermostats
