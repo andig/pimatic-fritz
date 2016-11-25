@@ -362,7 +362,7 @@ module.exports = (env) ->
     customConfig:
       # guiShowModeControl: false
       # guiShowPresetControl: false
-      guiShowValvePosition: false
+      # guiShowValvePosition: false
 
     # implement env.devices.TemperatureSensor
     _temperature: null

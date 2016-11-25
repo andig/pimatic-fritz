@@ -56,10 +56,10 @@ module.exports = {
         description: "Show the temperature input spinbox in the GUI"
         type: "boolean"
         default: true
-      guiShowValvePosition:
-        description: "Show the valve position in the GUI"
-        type: "boolean"
-        default: false
+      # guiShowValvePosition:
+      #   description: "Show the valve position in the GUI"
+      #   type: "boolean"
+      #   default: false
   }
   FritzTemperatureSensor: {
     title: "Comet DECT temperature sensor"
