@@ -472,6 +472,7 @@ module.exports = (env) ->
                 .then (battery) =>
                   @_setBattery(battery) if battery?
 
+
   # ###FritzTemperatureSensor class
   # FritzTemperatureSensor device models the temperature of the Comet DECT thermostats
   class FritzTemperatureSensorDevice extends env.devices.TemperatureSensor
