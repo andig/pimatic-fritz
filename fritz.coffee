@@ -364,8 +364,8 @@ module.exports = (env) ->
       # guiShowPresetControl: false
       # guiShowValvePosition: false
 
-    # implement env.devices.TemperatureSensor
-    _temperature: null
+     # implement env.devices.TemperatureSensor
+     _temperature: null
 
     # Initialize device by reading entity definition from middleware
     constructor: (@config, lastState, @plugin) ->
