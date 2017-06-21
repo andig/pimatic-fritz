@@ -359,13 +359,8 @@ module.exports = (env) ->
           temperatureSetpoint:
             type: "number"
 
-    customConfig:
-      # guiShowModeControl: false
-      # guiShowPresetControl: false
-      # guiShowValvePosition: false
-
-     # implement env.devices.TemperatureSensor
-     _temperature: null
+    # implement env.devices.TemperatureSensor
+    _temperature: null
 
     # Initialize device by reading entity definition from middleware
     constructor: (@config, lastState, @plugin) ->
@@ -380,8 +375,6 @@ module.exports = (env) ->
 
       # implement env.devices.TemperatureSensor
       # @attributes = _.extend @attributes, @customAttributes
-      # remove unsupported gui elements
-      @config = _.extend @config, @customConfig
 
       # get temp settings
       @readDefaultTemparatures()
