@@ -57,7 +57,7 @@ module.exports = (env) ->
               @framework.deviceManager.discoveredDevice(
                 'pimatic-fritz', "Switch (#{ain})", config
               )
-        
+
         # thermostat list
         @fritzCall("getThermostatList")
           .then (ains) =>
@@ -293,7 +293,7 @@ module.exports = (env) ->
       if @intervalTimerID?
         clearInterval @intervalTimerID
       super()
-      
+
     # poll device according to interval
     requestUpdate: ->
       @plugin.fritzCall("getGuestWlan")
@@ -391,7 +391,7 @@ module.exports = (env) ->
       if @intervalTimerID?
         clearInterval @intervalTimerID
       super()
-    
+
     # implement env.devices.HeatingThermostat
     changeTemperatureTo: (temperatureSetpoint) ->
       @_setSynced(false)
@@ -465,13 +465,46 @@ module.exports = (env) ->
       if @intervalTimerID?
         clearInterval @intervalTimerID
       super()
-      
+
     # poll device according to interval
     requestUpdate: ->
       @plugin.fritzCall("getTemperature", @config.ain)
         .then (temp) =>
           temp = @plugin.fritzClampTemperature temp
           @_setTemperature(temp)
+
+
+  # ###FritzContactSensor class
+  # FritzContactSensor device models the window open sensors (HAN FUN or DECT)
+  class FritzContactSensorDevice extends env.devices.ContactSensor
+
+    # Initialize device by reading entity definition from middleware
+    constructor: (@config, lastState, @plugin) ->
+      @id = @config.id
+      @name = @config.name
+      @interval = 1000 * (@config.interval or @plugin.config.interval)
+
+      # initial state
+      @_contact = lastState?.contact?.value
+
+      # keep updating
+      @requestUpdate()
+      @intervalTimerID = setInterval( =>
+        @requestUpdate()
+      , @interval
+      )
+      super()
+
+    destroy: () ->
+      if @intervalTimerID?
+        clearInterval @intervalTimerID
+      super()
+
+    # poll device according to interval
+    requestUpdate: ->
+      @plugin.fritzCall("getDeviceListFiltered", { identifier: @config.ain })
+        .then (devices) =>
+          @_setContact(+devices[0].alert.state)
 
 
   # ###Finally
