@@ -78,6 +78,20 @@ module.exports = (env) ->
               @framework.deviceManager.discoveredDevice(
                 'pimatic-fritz', "Temperature sensor (#{ain})", config
               )
+
+        # alarm sensors
+        @fritzCall("getDeviceListFiltered", { functionbitmask: @fritz.FUNCTION_ALARM })
+          .then (devices) =>
+            for device in devices
+              ain = device.ain
+              config = {
+                class: 'FritzContactSensor',
+                id: "contact-" + ain,
+                ain: ain
+              }
+              @framework.deviceManager.discoveredDevice(
+                'pimatic-fritz', "Contact sensor (#{ain})", config
+              )
       )
 
       @framework.deviceManager.registerDeviceClass("FritzOutlet", {
@@ -102,6 +116,12 @@ module.exports = (env) ->
         configDef: deviceConfigDef.FritzTemperatureSensor,
         createCallback: (config, lastState) =>
           return new FritzTemperatureSensorDevice(config, lastState, this)
+      })
+
+      @framework.deviceManager.registerDeviceClass("FritzContactSensor", {
+        configDef: deviceConfigDef.FritzContactSensor,
+        createCallback: (config, lastState) =>
+          return new FritzContactSensorDevice(config, lastState, this)
       })
 
       # # wait till all plugins are loaded

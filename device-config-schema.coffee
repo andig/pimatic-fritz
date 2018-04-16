@@ -73,4 +73,16 @@ module.exports = {
         type: "number"
         default: 0
   }
+  FritzContactSensor: {
+    title: "Contact sensor"
+    type: "object"
+    properties:
+      ain:
+        description: "Device AIN"
+        type: "string"
+      interval:
+        description: "Polling interval in seconds"
+        type: "number"
+        default: 0
+  }
 }
