@@ -35,10 +35,10 @@
     "fritzapi": "^0.10.3"
   },
   "peerDependencies": {
-    "pimatic": ">0.9.x"
+    "pimatic": "^0.9.40"
   },
   "engines": {
-    "node": ">0.8.x",
-    "npm": ">1.1.x"
+    "node": "^4.6.0",
+    "npm": "^2.5.0"
   }
 }

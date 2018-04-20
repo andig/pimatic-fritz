@@ -37,8 +37,14 @@ module.exports = (env) ->
           env.logger.info "Switch AINs: " + ains
           # thermostat list
           @fritzCall("getThermostatList")
-            .then (ains) ->
+            .then (ains) =>
               env.logger.info "Thermostat AINs: " + ains
+              @fritzCall("getDeviceListFiltered", { functionbitmask: fritz.FUNCTION_ALARM })
+                .then (devices) =>
+                  ains = []
+                  for device in devices
+                    ains.push device.identifier
+                  env.logger.info "Contact sensor AINs: " + ains
 
       # auto discovery
       @framework.deviceManager.on('discover', (eventData) =>
@@ -80,10 +86,10 @@ module.exports = (env) ->
               )
 
         # alarm sensors
-        @fritzCall("getDeviceListFiltered", { functionbitmask: @fritz.FUNCTION_ALARM })
+        @fritzCall("getDeviceListFiltered", { functionbitmask: fritz.FUNCTION_ALARM })
           .then (devices) =>
             for device in devices
-              ain = device.ain
+              ain = device.identifier
               config = {
                 class: 'FritzContactSensor',
                 id: "contact-" + ain,
@@ -524,7 +530,8 @@ module.exports = (env) ->
     requestUpdate: ->
       @plugin.fritzCall("getDeviceListFiltered", { identifier: @config.ain })
         .then (devices) =>
-          @_setContact(+devices[0].alert.state)
+          if devices[0]?.alert?
+            @_setContact(+devices[0].alert.state)
 
 
   # ###Finally
