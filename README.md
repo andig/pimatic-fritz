@@ -10,6 +10,7 @@ Devices supported are:
   - FritzDECT 200 outlet
   - CometDECT thermostat
   - both FritzDECT and CometDECT can also be used as temperature sensors
+  - HAN FUN contact/alarm sensors
 
 
 ## Plugin Configuration
@@ -47,6 +48,13 @@ Devices are linked to fritz plugin channels by specifying the `class`, `middlewa
       "id": "temp-1",
       "name": "TemperatureSensor 1",
       "class": "FritzTemperatureSensor",
+      "ain": "xxxxxxxxx"
+    },
+    },
+    {
+      "id": "contact-1",
+      "name": "ContactSensor 1",
+      "class": "FritzContactSensor",
       "ain": "xxxxxxxxx"
     },
     {
