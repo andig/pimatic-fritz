@@ -1,7 +1,8 @@
-deploy: 
-  api_key: 
+sudo: false
+language: node_js
+node_js: 8
+deploy:
+  api_key:
     secure: X4asAjCJp1v3AfPsvn7smY1SccAO3zW7hKoXlzBPCsAFHsuRY8KjrSUKloQXQ4AWaUAVFD1diCZ8JquxHD59LvwMdnKHhsTlwxwxCfHZ2NpG33BNWuDc0qiF1AxLb9Ne3Dkm8SKMcDZip8Z4ZpJos7Ii/7G/u4hTT5u/+mKFPgM=
   email: cpuidle@gmx.de
   provider: npm
-language: node_js
-sudo: false

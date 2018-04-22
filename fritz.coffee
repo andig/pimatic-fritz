@@ -37,8 +37,14 @@ module.exports = (env) ->
           env.logger.info "Switch AINs: " + ains
           # thermostat list
           @fritzCall("getThermostatList")
-            .then (ains) ->
+            .then (ains) =>
               env.logger.info "Thermostat AINs: " + ains
+              @fritzCall("getDeviceListFiltered", { functionbitmask: fritz.FUNCTION_ALARM })
+                .then (devices) =>
+                  ains = []
+                  for device in devices
+                    ains.push device.identifier
+                  env.logger.info "Contact sensor AINs: " + ains
 
       # auto discovery
       @framework.deviceManager.on('discover', (eventData) =>
@@ -57,7 +63,7 @@ module.exports = (env) ->
               @framework.deviceManager.discoveredDevice(
                 'pimatic-fritz', "Switch (#{ain})", config
               )
-        
+
         # thermostat list
         @fritzCall("getThermostatList")
           .then (ains) =>
@@ -77,6 +83,20 @@ module.exports = (env) ->
               }
               @framework.deviceManager.discoveredDevice(
                 'pimatic-fritz', "Temperature sensor (#{ain})", config
+              )
+
+        # alarm sensors
+        @fritzCall("getDeviceListFiltered", { functionbitmask: fritz.FUNCTION_ALARM })
+          .then (devices) =>
+            for device in devices
+              ain = device.identifier
+              config = {
+                class: 'FritzContactSensor',
+                id: "contact-" + ain,
+                ain: ain
+              }
+              @framework.deviceManager.discoveredDevice(
+                'pimatic-fritz', "Contact sensor (#{ain})", config
               )
       )
 
@@ -102,6 +122,12 @@ module.exports = (env) ->
         configDef: deviceConfigDef.FritzTemperatureSensor,
         createCallback: (config, lastState) =>
           return new FritzTemperatureSensorDevice(config, lastState, this)
+      })
+
+      @framework.deviceManager.registerDeviceClass("FritzContactSensor", {
+        configDef: deviceConfigDef.FritzContactSensor,
+        createCallback: (config, lastState) =>
+          return new FritzContactSensorDevice(config, lastState, this)
       })
 
       # # wait till all plugins are loaded
@@ -293,7 +319,7 @@ module.exports = (env) ->
       if @intervalTimerID?
         clearInterval @intervalTimerID
       super()
-      
+
     # poll device according to interval
     requestUpdate: ->
       @plugin.fritzCall("getGuestWlan")
@@ -391,7 +417,7 @@ module.exports = (env) ->
       if @intervalTimerID?
         clearInterval @intervalTimerID
       super()
-    
+
     # implement env.devices.HeatingThermostat
     changeTemperatureTo: (temperatureSetpoint) ->
       @_setSynced(false)
@@ -465,13 +491,47 @@ module.exports = (env) ->
       if @intervalTimerID?
         clearInterval @intervalTimerID
       super()
-      
+
     # poll device according to interval
     requestUpdate: ->
       @plugin.fritzCall("getTemperature", @config.ain)
         .then (temp) =>
           temp = @plugin.fritzClampTemperature temp
           @_setTemperature(temp)
+
+
+  # ###FritzContactSensor class
+  # FritzContactSensor device models the window open sensors (HAN FUN or DECT)
+  class FritzContactSensorDevice extends env.devices.ContactSensor
+
+    # Initialize device by reading entity definition from middleware
+    constructor: (@config, lastState, @plugin) ->
+      @id = @config.id
+      @name = @config.name
+      @interval = 1000 * (@config.interval or @plugin.config.interval)
+
+      # initial state
+      @_contact = lastState?.contact?.value
+
+      # keep updating
+      @requestUpdate()
+      @intervalTimerID = setInterval( =>
+        @requestUpdate()
+      , @interval
+      )
+      super()
+
+    destroy: () ->
+      if @intervalTimerID?
+        clearInterval @intervalTimerID
+      super()
+
+    # poll device according to interval
+    requestUpdate: ->
+      @plugin.fritzCall("getDeviceListFiltered", { identifier: @config.ain })
+        .then (devices) =>
+          if devices[0]?.alert?
+            @_setContact(+devices[0].alert.state)
 
 
   # ###Finally
