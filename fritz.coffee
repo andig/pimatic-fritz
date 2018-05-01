@@ -531,7 +531,7 @@ module.exports = (env) ->
       @plugin.fritzCall("getDeviceListFiltered", { identifier: @config.ain })
         .then (devices) =>
           if devices[0]?.alert?
-            @_setContact(+devices[0].alert.state)
+            @_setContact(1-devices[0].alert.state)
 
 
   # ###Finally
