@@ -258,7 +258,7 @@ module.exports = (env) ->
       @_energy = energy
       @emit "energy", energy
 
-    # Retuns a promise that is fulfilled when done.
+    # Returns a promise that is fulfilled when done.
     changeStateTo: (state) ->
       @plugin.fritzCall((if state then "setSwitchOn" else "setSwitchOff"), @config.ain)
         .then (newState) =>
@@ -350,7 +350,7 @@ module.exports = (env) ->
       @_psk = psk
       @emit "psk", psk
 
-    # Retuns a promise that is fulfilled when done.
+    # Returns a promise that is fulfilled when done.
     changeStateTo: (state) ->
       @plugin.fritzCall("setGuestWlan", state)
         .then (settings) =>
@@ -410,7 +410,7 @@ module.exports = (env) ->
       # @attributes = _.extend @attributes, @customAttributes
 
       # get temp settings
-      @readDefaultTemparatures()
+      @readDefaultTemperatures()
 
       # keep updating
       @requestUpdate()
@@ -449,7 +449,7 @@ module.exports = (env) ->
     # implement env.devices.TemperatureSensor
     getTemperature: -> Promise.resolve(@_temperature)
 
-    readDefaultTemparatures: ->
+    readDefaultTemperatures: ->
       @plugin.fritzCall("getTempComfort", @config.ain)
         .then (temp) =>
           temp = @plugin.fritzClampTemperature temp
