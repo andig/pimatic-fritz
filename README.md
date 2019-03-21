@@ -50,7 +50,6 @@ Devices are linked to fritz plugin channels by specifying the `class`, `middlewa
       "class": "FritzTemperatureSensor",
       "ain": "xxxxxxxxx"
     },
-    },
     {
       "id": "contact-1",
       "name": "ContactSensor 1",
