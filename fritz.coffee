@@ -237,6 +237,10 @@ module.exports = (env) ->
             @plugin.fritzCall("getSwitchEnergy", @config.ain)
             .then (energy) =>
               @_setEnergy(Math.round(energy / 100.0) / 10.0)
+        .catch (error) =>
+          if not error.response?
+            env.logger.error error.message
+
 
     # Get current value of last update in defined unit
     getPower: -> Promise.resolve(@_power)
@@ -254,7 +258,7 @@ module.exports = (env) ->
       @_energy = energy
       @emit "energy", energy
 
-    # Retuns a promise that is fulfilled when done.
+    # Returns a promise that is fulfilled when done.
     changeStateTo: (state) ->
       @plugin.fritzCall((if state then "setSwitchOn" else "setSwitchOff"), @config.ain)
         .then (newState) =>
@@ -327,6 +331,9 @@ module.exports = (env) ->
           @_setState(if settings.activate_guest_access then on else off)
           @_setSsid(settings.guest_ssid)
           @_setPsk(settings.wpa_key)
+        .catch (error) =>
+          if not error.response?
+            env.logger.error error.message
 
     # Get current value of last update
     getSsid: -> Promise.resolve(@_ssid)
@@ -343,7 +350,7 @@ module.exports = (env) ->
       @_psk = psk
       @emit "psk", psk
 
-    # Retuns a promise that is fulfilled when done.
+    # Returns a promise that is fulfilled when done.
     changeStateTo: (state) ->
       @plugin.fritzCall("setGuestWlan", state)
         .then (settings) =>
@@ -403,7 +410,7 @@ module.exports = (env) ->
       # @attributes = _.extend @attributes, @customAttributes
 
       # get temp settings
-      @readDefaultTemparatures()
+      @readDefaultTemperatures()
 
       # keep updating
       @requestUpdate()
@@ -442,7 +449,7 @@ module.exports = (env) ->
     # implement env.devices.TemperatureSensor
     getTemperature: -> Promise.resolve(@_temperature)
 
-    readDefaultTemparatures: ->
+    readDefaultTemperatures: ->
       @plugin.fritzCall("getTempComfort", @config.ain)
         .then (temp) =>
           temp = @plugin.fritzClampTemperature temp
@@ -452,6 +459,9 @@ module.exports = (env) ->
               temp = @plugin.fritzClampTemperature temp
               @emit "ecoTemp", temp
               @_setSynced(true)
+        .catch (error) =>
+          if not error.response?
+            env.logger.error error.message
 
     # poll device according to interval
     requestUpdate: ->
@@ -464,6 +474,9 @@ module.exports = (env) ->
             .then (temp) =>
               temp = @plugin.fritzClampTemperature temp
               @_setSetpoint(temp)
+        .catch (error) =>
+          if not error.response?
+            env.logger.error error.message
 
 
   # ###FritzTemperatureSensor class
@@ -498,6 +511,9 @@ module.exports = (env) ->
         .then (temp) =>
           temp = @plugin.fritzClampTemperature temp
           @_setTemperature(temp)
+        .catch (error) =>
+          if not error.response?
+            env.logger.error error.message
 
 
   # ###FritzContactSensor class
@@ -532,6 +548,9 @@ module.exports = (env) ->
         .then (devices) =>
           if devices[0]?.alert?
             @_setContact(1-devices[0].alert.state)
+        .catch (error) =>
+          if not error.response?
+            env.logger.error error.message
 
 
   # ###Finally
