@@ -28,7 +28,9 @@ You can load the plugin by editing your `config.json` to include:
 
 ## Device Configuration
 
-Devices are linked to fritz plugin channels by specifying the `class`, `middleware` and `ain` properties:
+Devices are linked to fritz devices by the given the `class` and `ain` properties. Note, however, the `FritzWlan`
+device constitutes a special case. It has has no `ain` property as it is mapped to a function block of the 
+FritzBox router:
 
     ...
     "devices": [
@@ -63,4 +65,5 @@ Devices are linked to fritz plugin channels by specifying the `class`, `middlewa
     },
   ...
 
-A list of available fritz switch and thermostat AINs will be logged to the pimatic console when the plugin is started.
+A list of available fritz switch, thermostat, and contact sensor AINs will be logged to the pimatic 
+console when the plugin is started.

@@ -151,8 +151,11 @@ module.exports = (env) ->
               env.logger.warn "Re-establishing session at " + @config.url
               return fritz.getSessionID(@config.user, @config.password, { url: @config.url })
                 .then (@sid) =>
-                  # @todo provide handling of sid == '0000000000000000'
                   return fritz[functionName] @sid, args..., { url: @config.url } # retry with new sid
+                .catch =>
+                  # handle sid == '0000000000000000'
+                  throw new Error "Invalid Session-Id: Invalid username or password"
+
             env.logger.error "Cannot access #{error.options?.url}: #{error.response?.statusCode}"
             throw error
 
