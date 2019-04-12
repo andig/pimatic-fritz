@@ -1,13 +1,13 @@
 {
   "name": "pimatic-fritz",
   "description": "Connect pimatic to FritzBox, FritzDECT and CometDECT devices",
-  "version": "0.6.7",
+  "version": "0.7.0",
   "author": {
     "name": "Andreas Goetz",
-    "email": "<cpuidle@gmx.de>",
-    "url": "http://github.com/andig/pimatic-fritz"
+    "email": "cpuidle@gmx.de",
+    "url": "https://github.com/andig/pimatic-fritz"
   },
-  "homepage": "http://github.com/andig/pimatic-fritz",
+  "homepage": "https://github.com/andig/pimatic-fritz",
   "license": "MIT",
   "keywords": [
     "pimatic",
@@ -15,6 +15,7 @@
     "SmartMeter",
     "Volkszaehler",
     "Monitoring",
+    "FritzAPI",
     "FritzBox",
     "FritzDECT"
   ],
@@ -31,8 +32,8 @@
     "url": "https://github.com/andig/pimatic-fritz"
   },
   "dependencies": {
-    "bluebird": "^3.5.1",
-    "fritzapi": "^0.10.3"
+    "bluebird": "^3.5.4",
+    "fritzapi": "^0.10.5"
   },
   "peerDependencies": {
     "pimatic": "^0.9.40"
