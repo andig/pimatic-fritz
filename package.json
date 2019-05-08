@@ -25,7 +25,8 @@
     "fritz.coffee",
     "README.md",
     "device-config-schema.coffee",
-    "fritz-config-schema.coffee"
+    "fritz-config-schema.coffee",
+    "devices"
   ],
   "repository": {
     "type": "git",
