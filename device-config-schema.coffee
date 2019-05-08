@@ -4,6 +4,10 @@ module.exports = {
     title: "Fritz!DECT 200 outlet"
     type: "object"
     properties:
+      box:
+        description: "Fritz!Box instance"
+        type: "string"
+        enum: ["main"]
       ain:
         description: "Device AIN"
         type: "string"
@@ -12,10 +16,14 @@ module.exports = {
         type: "number"
         default: 0
   }
-  FritzWlan: {
-    title: "Fritz!Box guest WLAN"
+  FritzWifi: {
+    title: "Fritz!Box guest Wifi"
     type: "object"
     properties:
+      box:
+        description: "Fritz!Box instance"
+        type: "string"
+        enum: ["main"]
       interval:
         description: "Polling interval in seconds"
         type: "number"
@@ -25,6 +33,10 @@ module.exports = {
     title: "Comet DECT thermostat"
     type: "object"
     properties:
+      box:
+        description: "Fritz!Box instance"
+        type: "string"
+        enum: ["main"]
       ain:
         description: "Device AIN"
         type: "string"
@@ -65,6 +77,10 @@ module.exports = {
     title: "Comet DECT temperature sensor"
     type: "object"
     properties:
+      box:
+        description: "Fritz!Box instance"
+        type: "string"
+        enum: ["main"]
       ain:
         description: "Device AIN"
         type: "string"
@@ -77,6 +93,10 @@ module.exports = {
     title: "Contact sensor"
     type: "object"
     properties:
+      box:
+        description: "Fritz!Box instance"
+        type: "string"
+        enum: ["main"]
       ain:
         description: "Device AIN"
         type: "string"
